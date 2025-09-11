@@ -4,6 +4,11 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { LogOut } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { signOutUser } from '../scripts';
+import { useUser } from '../context/UserContext';
+import FarmerTrading from '../components/trading/FarmerTrading';
+import BuyerTrading from '../components/trading/BuyerTrading';
+import TradingLoading from '../components/trading/TradingLoading';
+import '../components/trading/TradingStyles.css';
 
 function NavLink({ to, children }) {
   const location = useLocation();
@@ -50,34 +55,64 @@ NavLink.propTypes = {
   children: PropTypes.node.isRequired,
 };
 
-export default function Landing() {
-  const [user, setUser] = useState(null);
+function Trading() {
+  const { user, userProfile, loading, isFarmer, isBuyer, fetchUserProfile } = useUser();
+  const [fallbackProfile, setFallbackProfile] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-    async function getUser() {
-      const { data } = await supabase.auth.getUser();
-      setUser(data?.user || null);
+    if (user && !userProfile && !loading && !fallbackProfile) {
+      const defaultProfile = {
+        id: user.id,
+        full_name: user.user_metadata?.full_name || "User",
+        role: "Buyer", // Default role
+        address: "Not specified"
+      };
+      setFallbackProfile(defaultProfile);
     }
-    getUser();
-
-    // Inject weather widget script
-    const scriptId = 'weatherwidget-io-js';
-    if (!document.getElementById(scriptId)) {
-      const script = document.createElement('script');
-      script.id = scriptId;
-      script.src = 'https://weatherwidget.io/js/widget.min.js';
-      script.async = true;
-      document.body.appendChild(script);
-    }
-  }, []);
+  }, [user, userProfile, loading, fallbackProfile]);
 
   const handleSignOut = () => {
     signOutUser().then(() => navigate('/login'));
   };
-
   const handleLogin = () => navigate('/login');
   const handleProfile = () => navigate('/profile');
+
+  if (loading) {
+    return <TradingLoading />;
+  }
+
+  if (!user) {
+    return (
+      <>
+        <Header user={null} handleLogin={handleLogin} />
+        <div className="trading-container">
+          <div className="trading-card">
+            <h2>Please log in to access trading</h2>
+            <p>You need to be logged in to view the trading platform.</p>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  const currentProfile = userProfile || fallbackProfile;
+  if (!currentProfile) {
+    return (
+      <>
+        <Header user={user} handleProfile={handleProfile} handleSignOut={handleSignOut} />
+        <div className="trading-container">
+          <div className="trading-card">
+            <h2>Loading your profile...</h2>
+            <p>Please wait while we load your trading profile.</p>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  const isCurrentFarmer = currentProfile?.role === "Farmer";
+  const isCurrentBuyer = currentProfile?.role === "Buyer";
 
   return (
     <>
@@ -242,9 +277,21 @@ export default function Landing() {
           )}
         </div>
       </header>
-
-      {/* Weather widget section */}
-
+      <div style={{ paddingTop: '80px' }}>
+        <div className="trading-container">
+          {isCurrentFarmer && <FarmerTrading userProfile={currentProfile} />}
+          {isCurrentBuyer && <BuyerTrading userProfile={currentProfile} />}
+          {!isCurrentFarmer && !isCurrentBuyer && (
+            <div className="trading-card">
+              <h2>Role Not Assigned</h2>
+              <p>Please contact support to assign your role (Farmer or Buyer).</p>
+              <p>Current profile: {JSON.stringify(currentProfile)}</p>
+            </div>
+          )}
+        </div>
+      </div>
     </>
   );
 }
+
+export default Trading
