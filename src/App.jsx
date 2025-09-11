@@ -8,6 +8,8 @@ import Profile from './pages/Profile';
 import Footer from './components/Footer';
 import StartPage from './pages/StartPage'; // ✅ match component name
 import Trading from "./pages/Trading";
+import TradingDashboard from './components/TradingDashboard';
+import DisasterDashboard from './components/DisasterDashboard';
 
 function App() {
   return (
@@ -25,13 +27,14 @@ function App() {
         {/* Main content area */}
         <main style={{ flex: 1, width: '100%' }}>
           <Routes>
-            <Route path="/" element={<StartPage />} /> {/* ✅ show StartPage first */}
+            <Route path="/" element={<StartPage />} />
             <Route path="/login" element={<Login />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
             <Route path="/landing" element={<Landing />} />
             <Route path="/profile" element={<Profile />} />
-            <Route path="/disaster-report" element={<Landing />} />
+            <Route path="/disaster-report" element={<DisasterDashboard />} />
             <Route path="/trading" element={<Trading />} />
+            <Route path="/trading-dashboard" element={<TradingDashboard />} />
           </Routes>
         </main>
 

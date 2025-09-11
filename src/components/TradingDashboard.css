@@ -1,0 +1,390 @@
+:root {
+    --dark-green: #1B5E20;
+    --medium-green: #388E3C;
+    --light-green: #8BC34A;
+    --lighter-green: #C5E1A5;
+    --accent-green: #4CAF50;
+    --text-dark: #212121;
+    --text-light: #FFFFFF;
+    --card-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    --filter-bg: #f5f9f5;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background-color: #f5f9f5;
+    color: var(--text-dark);
+    line-height: 1.6;
+}
+
+.container {
+    width: 90%;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+header {
+    background: linear-gradient(135deg, var(--dark-green), var(--medium-green));
+    color: var(--text-light);
+    padding: 1.5rem 0;
+    border-radius: 0 0 15px 15px;
+    box-shadow: var(--card-shadow);
+    margin-bottom: 2rem;
+}
+
+.header-content {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 90%;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.logo i {
+    font-size: 2.5rem;
+    color: var(--light-green);
+}
+
+.logo h1 {
+    font-size: 2rem;
+    font-weight: 700;
+}
+
+.trading-dashboard {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.filters-section {
+    background-color: var(--filter-bg);
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: var(--card-shadow);
+    height: fit-content;
+    position: sticky;
+    top: 20px;
+    border: 1px solid var(--medium-green);
+}
+
+.filter-title {
+    color: var(--dark-green);
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.filter-group {
+    margin-bottom: 1.5rem;
+}
+
+.filter-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: var(--dark-green);
+}
+
+.filter-input, .filter-select {
+    width: 100%;
+    padding: 0.8rem;
+    border: 1px solid var(--medium-green);
+    border-radius: 6px;
+    font-size: 1rem;
+    background-color: white;
+    transition: border-color 0.3s ease;
+}
+
+.filter-input:focus, .filter-select:focus {
+    outline: none;
+    border-color: var(--dark-green);
+}
+
+.checkbox-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+}
+
+.checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.checkbox-item input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--dark-green);
+}
+
+.main-content {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.listings-section {
+    background-color: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: var(--card-shadow);
+}
+
+.listings-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.listings-title {
+    color: var(--dark-green);
+    font-size: 1.3rem;
+    font-weight: 600;
+}
+
+.search-bar {
+    display: flex;
+    align-items: center;
+    background-color: var(--filter-bg);
+    border: 1px solid var(--medium-green);
+    border-radius: 6px;
+    padding: 0.5rem 1rem;
+    width: 300px;
+}
+
+.search-bar input {
+    border: none;
+    background: none;
+    outline: none;
+    width: 100%;
+    padding: 0.2rem;
+}
+
+.search-bar i {
+    color: var(--medium-green);
+}
+
+.view-options {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.view-btn {
+    background-color: transparent;
+    border: 1px solid var(--medium-green);
+    color: var(--medium-green);
+    padding: 0.5rem 0.8rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.view-btn.active, .view-btn:hover {
+    background-color: var(--medium-green);
+    color: white;
+}
+
+.listings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+
+.listing-card {
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.listing-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--card-shadow);
+}
+
+.listing-image {
+    height: 160px;
+    overflow: hidden;
+}
+
+.listing-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.listing-content {
+    padding: 1.2rem;
+}
+
+.listing-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    margin-bottom: 0.8rem;
+}
+
+.crop-name {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--dark-green);
+}
+
+.crop-price {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--accent-green);
+}
+
+.listing-details {
+    margin-bottom: 1rem;
+}
+
+.detail-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.4rem;
+    color: #555;
+}
+
+.detail-item i {
+    color: var(--medium-green);
+    font-size: 0.9rem;
+}
+
+.farmer-info {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    padding-top: 1rem;
+    border-top: 1px solid #eee;
+}
+
+.farmer-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.farmer-name {
+    font-weight: 500;
+}
+
+.contact-btn {
+    background-color: var(--accent-green);
+    color: white;
+    border: none;
+    padding: 0.6rem 1.2rem;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    margin-left: auto;
+}
+
+.contact-btn:hover {
+    background-color: var(--medium-green);
+}
+
+.pagination {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 2rem;
+}
+
+.page-btn {
+    width: 40px;
+    height: 40px;
+    border: 1px solid var(--medium-green);
+    background-color: white;
+    color: var(--medium-green);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.page-btn.active, .page-btn:hover {
+    background-color: var(--medium-green);
+    color: white;
+}
+
+footer {
+    background-color: var(--dark-green);
+    color: var(--text-light);
+    text-align: center;
+    padding: 2rem 0;
+    margin-top: 3rem;
+    border-radius: 15px 15px 0 0;
+}
+
+.footer-links {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.footer-links a {
+    color: var(--text-light);
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.footer-links a:hover {
+    color: var(--light-green);
+}
+
+@media (max-width: 1024px) {
+    .trading-dashboard {
+        grid-template-columns: 1fr;
+    }
+    .filters-section {
+        order: 2;
+        position: static;
+    }
+}
+
+@media (max-width: 768px) {
+    .header-content {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    .listings-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .search-bar {
+        width: 100%;
+    }
+}
+
+
