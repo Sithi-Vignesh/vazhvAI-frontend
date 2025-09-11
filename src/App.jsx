@@ -18,6 +18,7 @@ import { signOutUser } from './scripts';
 function App() {
   const [user, setUser] = useState(null);
   const location = useLocation();
+  const hideNavbar = (location.pathname === '/' || location.pathname === '/login' || location.pathname === '/auth/callback');
 
   useEffect(() => {
     let isMounted = true;
@@ -63,7 +64,7 @@ function App() {
           width: '100%',       // ✅ make full width
         }}
       >
-        {!(location.pathname === '/' || location.pathname === '/login') && (
+        {!hideNavbar && (
           <Navbar
             user={user}
             handleLogin={handleLogin}
@@ -72,7 +73,7 @@ function App() {
           />
         )}
         {/* Main content area */}
-        <main style={{ flex: 1, width: '100%', paddingTop: (location.pathname === '/' || location.pathname === '/login') ? 0 : 72 }}>
+        <main style={{ flex: 1, width: '100%', paddingTop: hideNavbar ? 0 : 72 }}>
           <Routes>
             <Route path="/" element={<StartPage />} />
             <Route path="/login" element={<Login />} />
