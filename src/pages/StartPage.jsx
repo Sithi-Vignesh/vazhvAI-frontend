@@ -380,11 +380,7 @@ export default function App() {
             title="Direct Marketplace"
             desc="Farmers sell directly to buyers."
           />
-          <FeatureCard
-            icon={<Leaf size={40} color="#16a34a" />}
-            title="Fair Pricing"
-            desc="Live crop price ticker ensures transparency."
-          />
+
           <FeatureCard
             icon={<Brain size={40} color="#16a34a" />}
             title="AI Crop Detection"
