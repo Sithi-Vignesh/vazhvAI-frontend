@@ -1,6 +1,5 @@
 import React, { useState } from 'react'
 import GoogleButton from '../components/GoogleButton'
-import { Link } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 
 function Login() {
@@ -40,9 +39,6 @@ function Login() {
           </div>
         )}
 
-        <div style={{ marginTop: '16px', fontSize: '14px', textAlign: 'center' }}>
-          Don't have an account? <Link to="/signup" style={{ color: '#15803d', fontWeight: 600 }}>Sign up</Link>
-        </div>
       </div>
     </div>
   )
