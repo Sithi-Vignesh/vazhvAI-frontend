@@ -43,37 +43,61 @@ export function UserProvider({ children }) {
             localStorage.setItem("access_token", session.access_token);
           }
 
-          // Removed automatic redirect - let users navigate freely
-
-          // Test API connectivity first
-          console.log("UserContext: Testing API connectivity...");
-          try {
-            const testResponse = await fetch('https://vazhvai-backend.onrender.com/api/health');
-            console.log("UserContext: API test response:", testResponse.status);
-          } catch (apiError) {
-            console.log("UserContext: API test failed:", apiError.message);
-          }
-
-          // Fetch user profile logic (optional, as before)
+          // Fetch or create user profile via backend auth endpoints
           if (data?.user) {
-            console.log("UserContext: User found, attempting to fetch profile");
-            let profile = await fetchUserProfile(data.user.id);
-            // If profile still not found after both attempts, create a default one
-            if (!profile && data.user.email) {
-              console.log("UserContext: Profile not found by ID, trying email");
-              profile = await fetchUserProfileByEmail(data.user.email);
+            console.log("UserContext: Fetching auth profile from backend");
+            let fetched = null;
+            try {
+              const { data: profData, error: profErr } = await apiService.getAuthProfile();
+              if (profErr) {
+                console.warn("UserContext: getAuthProfile error, will attempt create:", profErr);
+              } else if (profData) {
+                fetched = profData;
+              }
+            } catch (e) {
+              console.warn("UserContext: getAuthProfile threw:", e);
             }
-            // Final fallback - create default profile if still not found
-            if (!profile) {
-              console.log("UserContext: Creating default profile for user");
-              const defaultProfile = {
-                id: data.user.id,
+
+            if (!fetched) {
+              console.log("UserContext: Creating backend profile (first-time or missing)");
+              const payload = {
                 full_name: data.user.user_metadata?.full_name || "User",
-                role: "Buyer", // Default role
-                address: "Not specified"
+                mobile: data.user.user_metadata?.phone || "",
+                address: data.user.user_metadata?.address || "",
+                role: "buyer",
               };
-              setUserProfile(defaultProfile);
-              console.log("UserContext: Default profile set:", defaultProfile);
+              try {
+                const { data: createData, error: createErr } = await apiService.createAuthProfile(payload);
+                if (createErr) {
+                  console.error("UserContext: createAuthProfile error:", createErr);
+                  // fallback minimal in-memory profile
+                  fetched = {
+                    id: data.user.id,
+                    email: data.user.email,
+                    full_name: payload.full_name,
+                    mobile: payload.mobile,
+                    address: payload.address,
+                    role: payload.role,
+                  };
+                } else {
+                  fetched = createData;
+                }
+              } catch (e) {
+                console.error("UserContext: createAuthProfile threw:", e);
+                fetched = {
+                  id: data.user.id,
+                  email: data.user.email,
+                  full_name: payload.full_name,
+                  mobile: payload.mobile,
+                  address: payload.address,
+                  role: payload.role,
+                };
+              }
+            }
+
+            if (fetched) {
+              setUserProfile(fetched);
+              console.log("UserContext: Backend profile set:", fetched);
             }
           }
         } catch (error) {
@@ -99,26 +123,12 @@ export function UserProvider({ children }) {
 
         if (session?.user) {
           console.log("UserContext: Auth state change - user found:", session.user.id);
-          // Try to fetch user profile by userId first, then by email as fallback
-          let profile = await fetchUserProfile(session.user.id);
-
-          // If profile not found by userId, try by email
-          if (!profile && session.user.email) {
-            console.log("UserContext: Auth change - trying email fetch");
-            profile = await fetchUserProfileByEmail(session.user.email);
-          }
-          
-          // Final fallback - create default profile if still not found
-          if (!profile) {
-            console.log("UserContext: Creating default profile for user in auth change");
-            const defaultProfile = {
-              id: session.user.id,
-              full_name: session.user.user_metadata?.full_name || "User",
-              role: "Buyer", // Default role
-              address: "Not specified"
-            };
-            setUserProfile(defaultProfile);
-            console.log("UserContext: Auth change - default profile set:", defaultProfile);
+          // Refresh backend auth profile
+          try {
+            const { data: profData } = await apiService.getAuthProfile();
+            if (profData) setUserProfile(profData);
+          } catch (e) {
+            console.warn("UserContext: onAuthStateChange getAuthProfile error", e);
           }
         } else {
           console.log("UserContext: Auth state change - no user, clearing profile");
@@ -130,97 +140,42 @@ export function UserProvider({ children }) {
     }
   }, [navigate]);
 
-  const fetchUserProfile = async (userId) => {
+  const fetchUserProfile = async (_userId) => {
     try {
-      console.log("UserContext: Fetching user profile for userId:", userId);
-      const { data, error } = await apiService.getUserProfile(userId);
+      console.log("UserContext: Fetching backend auth profile");
+      const { data, error } = await apiService.getAuthProfile();
 
       if (error) {
-        console.error(
-          "UserContext: Error fetching user profile from backend:",
-          error
-        );
-        // Return default profile if backend fails
-        const defaultProfile = {
-          id: userId,
-          full_name: "User",
-          role: "Buyer", // Default role
-          address: "Not specified"
-        };
-        console.log("UserContext: Setting default profile due to error:", defaultProfile);
-        setUserProfile(defaultProfile);
-        return defaultProfile;
+        console.error("UserContext: getAuthProfile error:", error);
+        return null;
       }
 
-      console.log("UserContext: User profile from backend:", data);
+      console.log("UserContext: Backend auth profile:", data);
       if (data) {
         setUserProfile(data);
         return data;
       } else {
-        // If data is null/undefined, create default profile
-        const defaultProfile = {
-          id: userId,
-          full_name: "User",
-          role: "Buyer", // Default role
-          address: "Not specified"
-        };
-        console.log("UserContext: Setting default profile due to null data:", defaultProfile);
-        setUserProfile(defaultProfile);
-        return defaultProfile;
+        return null;
       }
     } catch (error) {
-      console.error("UserContext: Error fetching user profile:", error);
-      // Return default profile if backend fails
-      const defaultProfile = {
-        id: userId,
-        full_name: "User",
-        role: "Buyer", // Default role
-        address: "Not specified"
-      };
-      console.log("UserContext: Setting default profile due to exception:", defaultProfile);
-      setUserProfile(defaultProfile);
-      return defaultProfile;
+      console.error("UserContext: Exception fetching backend profile:", error);
+      return null;
     }
   };
 
   const fetchUserProfileByEmail = async (email) => {
     try {
-      console.log("UserContext: Fetching user profile for email:", email);
-      const { data, error } = await apiService.getUserProfileByEmail(email);
-
+      console.log("UserContext: Fetching backend auth profile (ignoring email param):", email);
+      const { data, error } = await apiService.getAuthProfile();
       if (error) {
-        console.error(
-          "UserContext: Error fetching user profile by email from backend:",
-          error
-        );
-        // Return default profile if backend fails
-        const defaultProfile = {
-          id: "temp-id",
-          full_name: "User",
-          role: "Buyer", // Default role
-          address: "Not specified"
-        };
-        setUserProfile(defaultProfile);
-        return defaultProfile;
+        console.error("UserContext: getAuthProfile by email flow error:", error);
+        return null;
       }
-
-      console.log("UserContext: User profile from backend by email:", data);
-      setUserProfile(data);
+      if (data) setUserProfile(data);
       return data;
     } catch (error) {
-      console.error(
-        "UserContext: Error fetching user profile by email:",
-        error
-      );
-      // Return default profile if backend fails
-      const defaultProfile = {
-        id: "temp-id",
-        full_name: "User",
-        role: "Buyer", // Default role
-        address: "Not specified"
-      };
-      setUserProfile(defaultProfile);
-      return defaultProfile;
+      console.error("UserContext: Exception fetching backend profile (email flow):", error);
+      return null;
     }
   };
 
@@ -238,8 +193,8 @@ export function UserProvider({ children }) {
     userName,
     loading,
     signOut,
-    isFarmer: userProfile?.role === "Farmer",
-    isBuyer: userProfile?.role === "Buyer",
+    isFarmer: (userProfile?.role || "").toLowerCase() === "farmer",
+    isBuyer: (userProfile?.role || "").toLowerCase() === "buyer",
     fetchUserProfile,
     fetchUserProfileByEmail,
     apiService,

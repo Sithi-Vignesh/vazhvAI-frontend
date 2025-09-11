@@ -8,13 +8,28 @@ class ApiService {
 
   // Generic request method
   async request(endpoint, options = {}) {
-    const url = `${this.baseURL}${endpoint}`
+    const base = this.baseURL.endsWith('/') ? this.baseURL.slice(0, -1) : this.baseURL
+    const path = typeof endpoint === 'string' && endpoint.startsWith('/') ? endpoint.slice(1) : endpoint
+    const url = `${base}/${path}`
     const config = {
       headers: {
         'Content-Type': 'application/json',
         ...options.headers,
       },
       ...options,
+    }
+
+    // Attach Authorization header if access token exists and not already provided
+    try {
+      const existingAuthHeader = config.headers && (config.headers.Authorization || config.headers.authorization)
+      if (!existingAuthHeader) {
+        const accessToken = typeof localStorage !== 'undefined' ? localStorage.getItem('access_token') : null
+        if (accessToken) {
+          config.headers.Authorization = `Bearer ${accessToken}`
+        }
+      }
+    } catch (_) {
+      // noop: localStorage may be unavailable in some environments
     }
 
     try {
@@ -127,6 +142,30 @@ class ApiService {
     return this.request('/api/reviews', {
       method: 'POST',
       body: JSON.stringify(reviewData),
+    })
+  }
+
+  // ===== Auth profile endpoints (Flask backend) =====
+  // Create or upsert profile
+  async createAuthProfile(profileData) {
+    return this.request('/auth/create', {
+      method: 'POST',
+      body: JSON.stringify(profileData),
+    })
+  }
+
+  // Get current user's profile (uses JWT for user context)
+  async getAuthProfile() {
+    return this.request('/auth/profile', {
+      method: 'GET',
+    })
+  }
+
+  // Update current user's profile
+  async updateAuthProfile(updateData) {
+    return this.request('/auth/update', {
+      method: 'PATCH',
+      body: JSON.stringify(updateData),
     })
   }
 }

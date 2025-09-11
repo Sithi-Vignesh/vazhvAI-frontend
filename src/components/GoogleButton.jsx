@@ -1,26 +1,44 @@
 import React from 'react'
 import PropTypes from 'prop-types'
+import './GoogleButton.css'
 
 function GoogleButton({ onClick, disabled }) {
+  const buttonStyles = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '8px',
+    padding: '12px 16px',
+    borderRadius: '10px',
+    border: '1px solid rgba(34,197,94,0.25)',
+    background: 'linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)',
+    color: '#166534',
+    cursor: disabled ? 'not-allowed' : 'pointer',
+    fontSize: '14px',
+    fontWeight: '600',
+    width: '100%',
+    justifyContent: 'center',
+    boxShadow: '0 10px 28px rgba(22, 101, 52, 0.10)',
+    fontFamily: 'inherit',
+    transition: 'all 0.2s ease',
+    opacity: disabled ? 0.6 : 1
+  }
+
   return (
-    <button
-      onClick={onClick}
-      disabled={disabled}
+    <div
+      onClick={disabled ? undefined : onClick}
+      className="google-button"
       style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: '8px',
-        padding: '12px 16px',
-        borderRadius: '10px',
-        border: '1px solid rgba(34,197,94,0.25)',
-        background: 'linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)',
-        color: '#166534',
-        cursor: 'pointer',
-        fontSize: '14px',
-        fontWeight: 600,
-        width: '100%',
-        justifyContent: 'center',
-        boxShadow: '0 10px 28px rgba(22, 101, 52, 0.10)'
+        ...buttonStyles,
+        cursor: disabled ? 'not-allowed' : 'pointer',
+        userSelect: 'none'
+      }}
+      role="button"
+      tabIndex={disabled ? -1 : 0}
+      onKeyDown={(e) => {
+        if (!disabled && (e.key === 'Enter' || e.key === ' ')) {
+          e.preventDefault()
+          onClick()
+        }
       }}
     >
       <span style={{ fontSize: 0 }} aria-hidden>
@@ -32,7 +50,7 @@ function GoogleButton({ onClick, disabled }) {
         </svg>
       </span>
       <span>Continue with Google</span>
-    </button>
+    </div>
   )
 }
 

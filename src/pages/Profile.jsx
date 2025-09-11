@@ -3,12 +3,60 @@ import { useUser } from '../context/UserContext'
 import { Star, Mail, Phone, MapPin, User, Shield, Package, MessageSquare } from 'lucide-react'
 
 export default function Profile() {
-  const { user, userProfile, isFarmer, apiService } = useUser()
+  const { user, userProfile, isFarmer, apiService, fetchUserProfile } = useUser()
   const [reviews, setReviews] = useState([])
   const [crops, setCrops] = useState([])
   const [loading, setLoading] = useState(true)
   const [editingField, setEditingField] = useState(null)
   const [editValue, setEditValue] = useState("")
+  // Test states for backend auth profile endpoints
+  const [authProfile, setAuthProfile] = useState(null)
+  const [authLoading, setAuthLoading] = useState(false)
+  const [authError, setAuthError] = useState("")
+  const [formFullName, setFormFullName] = useState("")
+  const [formMobile, setFormMobile] = useState("")
+  const [formAddress, setFormAddress] = useState("")
+  const [formRole, setFormRole] = useState("buyer")
+  const [isEditing, setIsEditing] = useState(false)
+const [isFirstTime, setIsFirstTime] = useState(false);
+
+  useEffect(() => {
+    async function checkProfile() {
+      if (!user) return;
+      const profile = await fetchUserProfile();
+      console.log(profile)
+      if (!profile) {
+        setIsFirstTime(true);
+      } else {
+        setIsFirstTime(false);
+      }
+      setLoading(false);
+    }
+    checkProfile();
+  }, [user]);
+
+  if (loading) return <div>Loading...</div>;
+
+  return (
+    <div>
+      <h2>Welcome, {userProfile?.full_name || "User"}!</h2>
+
+      {isFirstTime ? (
+        <button onClick={() => createProfile()}>Create Profile</button>
+      ) : (
+        <button onClick={() => updateProfile()}>Update Profile</button>
+      )}
+    </div>
+  );
+  
+  async function createProfile() {
+    console.log("creating");
+  }
+
+  async function updateProfile() {
+    // call your backend update endpoint
+    console.log("updating");
+  }
 
   useEffect(() => {
     const fetchProfileData = async () => {
@@ -91,6 +139,50 @@ export default function Profile() {
             border: '1px solid #e5e7eb',
             marginBottom: '20px'
           }}>
+            {/* Card actions */}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px' }}>
+              {!isEditing ? (
+                <button
+                  style={{ background: '#22c55e', color: '#fff', border: 'none', borderRadius: '6px', padding: '6px 12px', cursor: 'pointer' }}
+                  onClick={() => {
+                    const currentName = authProfile?.full_name || user?.user_metadata?.full_name || userProfile?.full_name || ''
+                    const currentMobile = authProfile?.mobile || user?.user_metadata?.phone || userProfile?.phone || ''
+                    const currentAddress = authProfile?.address || user?.user_metadata?.address || userProfile?.address || ''
+                    setFormFullName(currentName)
+                    setFormMobile(currentMobile)
+                    setFormAddress(currentAddress)
+                    setIsEditing(true)
+                  }}
+                >Edit Profile</button>
+              ) : (
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button
+                    style={{ background: '#0ea5e9', color: '#fff', border: 'none', borderRadius: '6px', padding: '6px 12px', cursor: 'pointer' }}
+                    onClick={async () => {
+                      setAuthLoading(true)
+                      setAuthError("")
+                      const payload = {
+                        full_name: formFullName,
+                        mobile: formMobile,
+                        address: formAddress,
+                      }
+                      const { data, error } = await apiService.updateAuthProfile(payload)
+                      if (error) {
+                        setAuthError(error)
+                      } else {
+                        setAuthProfile(data || null)
+                        setIsEditing(false)
+                      }
+                      setAuthLoading(false)
+                    }}
+                  >Save</button>
+                  <button
+                    style={{ background: '#f3f4f6', color: '#111827', border: '1px solid #e5e7eb', borderRadius: '6px', padding: '6px 12px', cursor: 'pointer' }}
+                    onClick={() => setIsEditing(false)}
+                  >Cancel</button>
+                </div>
+              )}
+            </div>
             {/* Profile Picture */}
             <div style={{ textAlign: 'center', marginBottom: '24px' }}>
               {user?.user_metadata?.avatar_url ? (
@@ -124,52 +216,23 @@ export default function Profile() {
                 </div>
               )}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '8px' }}>
-                {editingField === 'name' ? (
-                  <>
-                    <input
-                      type="text"
-                      value={editValue}
-                      onChange={e => setEditValue(e.target.value)}
-                      style={{ fontSize: '20px', padding: '4px 8px', borderRadius: '6px', border: '1px solid #22c55e', marginRight: '8px' }}
-                      autoFocus
-                    />
-                    <button
-                      style={{ background: '#22c55e', color: '#fff', border: 'none', borderRadius: '6px', padding: '4px 10px', marginRight: '4px', cursor: 'pointer' }}
-                      onClick={async () => {
-                        if (!userProfile?.id) return;
-                        const updatedProfile = { ...userProfile, full_name: editValue };
-                        const res = await apiService.updateUserProfile(userProfile.id, updatedProfile);
-                        if (!res.error) {
-                          setEditingField(null);
-                        } else {
-                          alert('Failed to save name: ' + res.error);
-                        }
-                      }}
-                    >Save</button>
-                    <button
-                      style={{ background: '#eee', color: '#333', border: 'none', borderRadius: '6px', padding: '4px 10px', cursor: 'pointer' }}
-                      onClick={() => setEditingField(null)}
-                    >Cancel</button>
-                  </>
+                {!isEditing ? (
+                  <h2 style={{ 
+                    fontSize: '24px', 
+                    fontWeight: '700', 
+                    color: '#111827',
+                    margin: 0
+                  }}>
+                    {authProfile?.full_name || user?.user_metadata?.full_name || userProfile?.full_name || 'User'}
+                  </h2>
                 ) : (
-                  <>
-                    <h2 style={{ 
-                      fontSize: '24px', 
-                      fontWeight: '700', 
-                      color: '#111827',
-                      margin: 0
-                    }}>
-                      {user?.user_metadata?.full_name || userProfile?.full_name || 'User'}
-                    </h2>
-                    <span style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }} title="Edit name"
-                      onClick={() => {
-                        setEditingField('name');
-                        setEditValue(user?.user_metadata?.full_name || userProfile?.full_name || '');
-                      }}
-                    >
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
-                    </span>
-                  </>
+                  <input
+                    type="text"
+                    value={formFullName}
+                    onChange={e => setFormFullName(e.target.value)}
+                    style={{ fontSize: '20px', padding: '4px 8px', borderRadius: '6px', border: '1px solid #22c55e' }}
+                    autoFocus
+                  />
                 )}
               </div>
               <div style={{
@@ -215,93 +278,33 @@ export default function Profile() {
                 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                   <Phone size={16} color="#666" />
-                  {editingField === 'phone' ? (
-                    <>
-                      <input
-                        type="text"
-                        value={editValue}
-                        onChange={e => setEditValue(e.target.value)}
-                        style={{ fontSize: '14px', padding: '4px 8px', borderRadius: '6px', border: '1px solid #22c55e', marginRight: '8px' }}
-                        autoFocus
-                      />
-                      <button
-                        style={{ background: '#22c55e', color: '#fff', border: 'none', borderRadius: '6px', padding: '4px 10px', marginRight: '4px', cursor: 'pointer' }}
-                        onClick={async () => {
-                          if (!userProfile?.id) return;
-                          const updatedProfile = { ...userProfile, phone: editValue };
-                          const res = await apiService.updateUserProfile(userProfile.id, updatedProfile);
-                          if (!res.error) {
-                            setEditingField(null);
-                          } else {
-                            alert('Failed to save phone: ' + res.error);
-                          }
-                        }}
-                      >Save</button>
-                      <button
-                        style={{ background: '#eee', color: '#333', border: 'none', borderRadius: '6px', padding: '4px 10px', cursor: 'pointer' }}
-                        onClick={() => setEditingField(null)}
-                      >Cancel</button>
-                    </>
+                  {!isEditing ? (
+                    <span style={{ fontSize: '14px', color: '#666' }}>
+                      {authProfile?.mobile || user?.user_metadata?.phone || userProfile?.phone || 'Not provided'}
+                    </span>
                   ) : (
-                    <>
-                      <span style={{ fontSize: '14px', color: '#666' }}>
-                        {user?.user_metadata?.phone || userProfile?.phone || 'Not provided'}
-                      </span>
-                      <span style={{ cursor: 'pointer', marginLeft: '4px', display: 'flex', alignItems: 'center' }} title="Edit phone"
-                        onClick={() => {
-                          setEditingField('phone');
-                          setEditValue(user?.user_metadata?.phone || userProfile?.phone || '');
-                        }}
-                      >
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
-                      </span>
-                    </>
+                    <input
+                      type="text"
+                      value={formMobile}
+                      onChange={e => setFormMobile(e.target.value)}
+                      style={{ fontSize: '14px', padding: '4px 8px', borderRadius: '6px', border: '1px solid #22c55e' }}
+                    />
                   )}
                 </div>
                 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                   <MapPin size={16} color="#666" />
-                  {editingField === 'address' ? (
-                    <>
-                      <input
-                        type="text"
-                        value={editValue}
-                        onChange={e => setEditValue(e.target.value)}
-                        style={{ fontSize: '14px', padding: '4px 8px', borderRadius: '6px', border: '1px solid #22c55e', marginRight: '8px' }}
-                        autoFocus
-                      />
-                      <button
-                        style={{ background: '#22c55e', color: '#fff', border: 'none', borderRadius: '6px', padding: '4px 10px', marginRight: '4px', cursor: 'pointer' }}
-                        onClick={async () => {
-                          if (!userProfile?.id) return;
-                          const updatedProfile = { ...userProfile, address: editValue };
-                          const res = await apiService.updateUserProfile(userProfile.id, updatedProfile);
-                          if (!res.error) {
-                            setEditingField(null);
-                          } else {
-                            alert('Failed to save address: ' + res.error);
-                          }
-                        }}
-                      >Save</button>
-                      <button
-                        style={{ background: '#eee', color: '#333', border: 'none', borderRadius: '6px', padding: '4px 10px', cursor: 'pointer' }}
-                        onClick={() => setEditingField(null)}
-                      >Cancel</button>
-                    </>
+                  {!isEditing ? (
+                    <span style={{ fontSize: '14px', color: '#666' }}>
+                      {authProfile?.address || user?.user_metadata?.address || userProfile?.address || 'Not provided'}
+                    </span>
                   ) : (
-                    <>
-                      <span style={{ fontSize: '14px', color: '#666' }}>
-                        {user?.user_metadata?.address || userProfile?.address || 'Not provided'}
-                      </span>
-                      <span style={{ cursor: 'pointer', marginLeft: '4px', display: 'flex', alignItems: 'center' }} title="Edit address"
-                        onClick={() => {
-                          setEditingField('address');
-                          setEditValue(user?.user_metadata?.address || userProfile?.address || '');
-                        }}
-                      >
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
-                      </span>
-                    </>
+                    <input
+                      type="text"
+                      value={formAddress}
+                      onChange={e => setFormAddress(e.target.value)}
+                      style={{ fontSize: '14px', padding: '4px 8px', borderRadius: '6px', border: '1px solid #22c55e' }}
+                    />
                   )}
                 </div>
                 
@@ -321,7 +324,141 @@ export default function Profile() {
                   </span>
                 </div>
               </div>
+              {/* Role editor (separate) */}
+              <div style={{ marginTop: '16px', paddingTop: '12px', borderTop: '1px solid #e5e7eb' }}>
+                <h4 style={{ fontSize: '14px', fontWeight: 600, color: '#111827', margin: '0 0 8px 0' }}>Role</h4>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  <select
+                    value={formRole}
+                    onChange={(e) => setFormRole(e.target.value)}
+                    style={{ padding: '6px 8px', borderRadius: '6px', border: '1px solid #e5e7eb' }}
+                  >
+                    <option value="buyer">buyer</option>
+                    <option value="farmer">farmer</option>
+                  </select>
+                  <button
+                    style={{ background: '#f59e0b', color: '#fff', border: 'none', borderRadius: '6px', padding: '6px 12px', cursor: 'pointer' }}
+                    onClick={async () => {
+                      const confirmed = window.confirm(`Change role to "${formRole}"?`)
+                      if (!confirmed) return
+                      setAuthLoading(true)
+                      setAuthError("")
+                      const { data, error } = await apiService.updateAuthProfile({ role: (formRole || '').toLowerCase() })
+                      if (error) {
+                        setAuthError(error)
+                      } else {
+                        setAuthProfile({ ...(authProfile || {}), ...(data || {}) })
+                      }
+                      setAuthLoading(false)
+                    }}
+                  >Update Role</button>
+                  <span style={{ fontSize: '13px', color: '#666' }}>Current: {authProfile?.role || (isFarmer ? 'farmer' : 'buyer')}</span>
+                </div>
+              </div>
             </div>
+          </div>
+
+          {/* Backend Auth Profile (Test) */}
+          <div style={{
+            background: '#fff',
+            borderRadius: '16px',
+            padding: '20px',
+            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
+            border: '1px solid #e5e7eb'
+          }}>
+            <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#111827', margin: '0 0 12px 0' }}>Backend Auth Profile (Test)</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '12px' }}>
+              <input
+                placeholder="Full name"
+                value={formFullName}
+                onChange={(e) => setFormFullName(e.target.value)}
+                style={{ padding: '8px', borderRadius: '6px', border: '1px solid #e5e7eb' }}
+              />
+              <input
+                placeholder="Mobile"
+                value={formMobile}
+                onChange={(e) => setFormMobile(e.target.value)}
+                style={{ padding: '8px', borderRadius: '6px', border: '1px solid #e5e7eb' }}
+              />
+              <input
+                placeholder="Address"
+                value={formAddress}
+                onChange={(e) => setFormAddress(e.target.value)}
+                style={{ padding: '8px', borderRadius: '6px', border: '1px solid #e5e7eb' }}
+              />
+              <select
+                value={formRole}
+                onChange={(e) => setFormRole(e.target.value)}
+                style={{ padding: '8px', borderRadius: '6px', border: '1px solid #e5e7eb' }}
+              >
+                <option value="buyer">buyer</option>
+                <option value="farmer">farmer</option>
+              </select>
+            </div>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '12px' }}>
+              <button
+                onClick={async () => {
+                  setAuthLoading(true)
+                  setAuthError("")
+                  const { data, error } = await apiService.getAuthProfile()
+                  if (error) setAuthError(error)
+                  setAuthProfile(data || null)
+                  setAuthLoading(false)
+                }}
+                style={{ background: '#f3f4f6', border: '1px solid #e5e7eb', borderRadius: '6px', padding: '6px 10px', cursor: 'pointer' }}
+              >Fetch</button>
+              <button
+                onClick={async () => {
+                  setAuthLoading(true)
+                  setAuthError("")
+                  const payload = {
+                    full_name: formFullName,
+                    mobile: formMobile,
+                    address: formAddress,
+                    role: (formRole || '').toLowerCase()
+                  }
+                  const { data, error } = await apiService.createAuthProfile(payload)
+                  if (error) setAuthError(error)
+                  setAuthProfile(data || null)
+                  setAuthLoading(false)
+                }}
+                style={{ background: '#22c55e', color: '#fff', border: 'none', borderRadius: '6px', padding: '6px 10px', cursor: 'pointer' }}
+              >Create/Upsert</button>
+              <button
+                onClick={async () => {
+                  setAuthLoading(true)
+                  setAuthError("")
+                  const payload = {
+                    ...(formFullName ? { full_name: formFullName } : {}),
+                    ...(formMobile ? { mobile: formMobile } : {}),
+                    ...(formAddress ? { address: formAddress } : {}),
+                    ...(formRole ? { role: (formRole || '').toLowerCase() } : {})
+                  }
+                  const { data, error } = await apiService.updateAuthProfile(payload)
+                  if (error) setAuthError(error)
+                  setAuthProfile(data || null)
+                  setAuthLoading(false)
+                }}
+                style={{ background: '#0ea5e9', color: '#fff', border: 'none', borderRadius: '6px', padding: '6px 10px', cursor: 'pointer' }}
+              >Update</button>
+            </div>
+            {authLoading && (
+              <div style={{ fontSize: '14px', color: '#666', marginBottom: '8px' }}>Working...</div>
+            )}
+            {authError && (
+              <div style={{ fontSize: '14px', color: '#dc2626', marginBottom: '8px' }}>{authError}</div>
+            )}
+            {authProfile && (
+              <div style={{ background: '#f8fafc', border: '1px solid #e5e7eb', borderRadius: '8px', padding: '10px', fontSize: '13px', color: '#111827' }}>
+                <div><strong>id:</strong> {authProfile.id}</div>
+                <div><strong>email:</strong> {authProfile.email}</div>
+                <div><strong>full_name:</strong> {authProfile.full_name}</div>
+                <div><strong>mobile:</strong> {authProfile.mobile}</div>
+                <div><strong>address:</strong> {authProfile.address}</div>
+                <div><strong>role:</strong> {authProfile.role}</div>
+                <div><strong>updated_at:</strong> {authProfile.updated_at}</div>
+              </div>
+            )}
           </div>
         </div>
 
