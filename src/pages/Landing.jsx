@@ -4,7 +4,6 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { LogOut } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { signOutUser } from '../scripts';
-import Navbar from '../components/Navbar';
 import '../App.css';
 
 
@@ -82,12 +81,7 @@ export default function Landing() {
 
   return (
     <>
-      <Navbar 
-        user={user} 
-        handleLogin={handleLogin} 
-        handleSignOut={handleSignOut} 
-        handleProfile={handleProfile} 
-      />
+      {/* Navbar is rendered globally in App */}
     </>
   );
 }
