@@ -286,18 +286,25 @@ export default function App() {
     );
   };
 
-  // Bounce keyframes for StepCard
+  // Bounce keyframes for StepCard (robust injection)
   useEffect(() => {
-    const styleSheet = document.styleSheets[0];
-    styleSheet.insertRule(
-      `
-      @keyframes bounce {
-        0%, 100% { transform: translateY(0); }
-        50% { transform: translateY(-10px); }
+    try {
+      let styleSheet = document.styleSheets[0];
+      if (!styleSheet) {
+        const styleEl = document.createElement('style');
+        styleEl.setAttribute('data-dynamic', 'true');
+        document.head.appendChild(styleEl);
+        styleSheet = styleEl.sheet;
       }
-    `,
-      styleSheet.cssRules.length
-    );
+      const rule = `@keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }`;
+      // Avoid duplicate insertion
+      const exists = Array.from(styleSheet.cssRules || []).some(r => r.name === 'bounce');
+      if (!exists) {
+        styleSheet.insertRule(rule, styleSheet.cssRules.length);
+      }
+    } catch (e) {
+      // Silent fail if stylesheet injection not permitted
+    }
   }, []);
 
   return (
@@ -380,11 +387,7 @@ export default function App() {
             title="Direct Marketplace"
             desc="Farmers sell directly to buyers."
           />
-          <FeatureCard
-            icon={<Leaf size={40} color="#16a34a" />}
-            title="Fair Pricing"
-            desc="Live crop price ticker ensures transparency."
-          />
+
           <FeatureCard
             icon={<Brain size={40} color="#16a34a" />}
             title="AI Crop Detection"
